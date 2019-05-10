@@ -1,0 +1,12 @@
+#Node Modules
+node_modules
+npm-debug.log
+
+# Local Development
+*.env
+*.dev
+*DS_Store
+
+# Docker
+Dockerfile
+docker-compose.yml
