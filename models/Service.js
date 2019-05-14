@@ -8,8 +8,9 @@ const ServiceSchema = new Schema({
 	subname: String,
 	description: String,
 	duration: Number,
+	timeslots: [String],
 	price: Number,
 	isActive: {type: Boolean, default: String}
-})
+});
 
 module.exports = mongoose.model("Service", ServiceSchema);

@@ -5,7 +5,7 @@ const router = express.Router();
 const Service = require('../models/Service');
 const Provider = require('../models/Provider');
 const User = require('../models/User');
-const category = require('..models/Category');
+const category = require('../models/Category');
 const Booking = require('../models/Booking')
 
 
@@ -85,11 +85,11 @@ const Booking = require('../models/Booking')
 		})
 	})
 
-// ///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // CATEGORIES CONTROLLER 
-
 	//index
+
 	router.get("/categories", (req, res, next) => {
 		Category.find({})
 		.then(categories => {
@@ -205,3 +205,4 @@ const Booking = require('../models/Booking')
 /////////////////////////////////////////
 // PROVIDER CONTROLLER
 
+module.exports = router;
