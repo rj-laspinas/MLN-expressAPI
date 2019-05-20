@@ -1,40 +1,40 @@
 const mongoose = require("mongoose");
-
+const moment = require("moment");
 const Schema = mongoose.Schema;
 
 const ProviderSchema = new Schema({
-
-	name: String,
+	
+	fname: String,
+	lname: String,
+	gender: String,
 	mobile: Number,
 	email: String,
-	password: String,
-	sex: String,
 	
 	region: String,
 	city: String,
 	Barangay: String,
 	addressline: String,
 
-	
-	workExperience: String,
-	skills: String,
-	maritalStatus: String,
-	birthdate: Date,
-	photo: String,
-	id1: String,
-	id2: String,
-	facebook: String,
-	category: String, /*Applying for {Service Category}*/
+	workExperience: [{type: String, default: ""}],
+	skills: [{type: String, default: ""}],
+	maritalStatus: [{type: String, default: ""}],
+	birthdate: [{type: String, default: ""}],
+	photo: [{type: String, default: ""}],
+	// // id1: {type: String, default: ""},
+	// // id2: {type: String, default: ""},
+	// facebook: {type: String, default: ""},
+	category: {type: String, default: ""}, /*Applying for {Service Category}*/
+	userRating: [{type: Number, default: 0}], //push additional ratings
+	userComment: [{type: String, default: ""}],
 
-	userRating: Number,
-	userComment: String,
+	// bank: String,
+	// accountNo: Number,
+	isVerified: {type: Boolean,	default: false},
+	isAvailable: {type: Boolean,	default: false},
 
-	bank: String,
-	accountNo: Number,
+	createAt: {type: Date, default: moment()},
+	updatedAt: {type: Date, default: moment()},
 	
-	isAdmin: { type: Boolean, default: false},
-	isActive: {	type: Boolean, default: true},
-	isVerified: {type: Boolean,	default: false}
 });
 
 module.exports = mongoose.model("Provider", ProviderSchema);

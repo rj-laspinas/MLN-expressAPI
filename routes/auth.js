@@ -25,7 +25,7 @@ router.post("/login", (req, res, next) => {
 			}
 			//the sign method of jwt takes the ff. form:
 			//jwt.sign(payload, secretKey, [options, callback])
-			const token = jwt.sign(user.toJSON(), "secretNgaE", { expiresIn : '300m'});
+			const token = jwt.sign(user.toJSON(), "MyBigSecret", { expiresIn : '300m'});
 			//upon successful JWT generation, return a success status code
 			return res.status(200).json({
 				//with accompanying data

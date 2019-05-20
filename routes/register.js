@@ -6,18 +6,15 @@ const UserModel = require("../models/User");
 
 const bcrypt = require("bcrypt-nodejs");
 
-router.post("/registerUser", (req, res) => {
+router.post("/register", (req, res) => {
 	let email = req.body.email;
 	let password = req.body.password;
 	let mobile = req.body.mobile;
-
 	let fname = req.body.fname;
 	let lname = req.body.lname;
-	let city = req.body.city;
-	let barangay = req.body.barangay;
-	let gender = req.body.gender;
 
-	if(!email || !password || !mobile || !fname || !lname || !city || !barangay || !gender){
+
+	if(!email || !password || !mobile || !fname || !lname ){
 		return res.status(500).json({
 			"error":"Missing credentials"
 		})
@@ -44,9 +41,7 @@ router.post("/registerUser", (req, res) => {
 					"mobile": mobile,
 					"email": email,
 					"password": hash,
-					"city": city,
-					"barangay": barangay,
-					"gender" : gender,
+					
 				})
 
 				newUser.save(function(err){

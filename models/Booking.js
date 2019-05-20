@@ -1,40 +1,32 @@
 const mongoose = require("mongoose");
-
+const moment = require("moment");
 const Schema = mongoose.Schema;
-
-const ServiceSchema = new Schema({ServiceId : String});
-
 const UserSchema = new Schema({UserId : String});
 
-const StatusSchema = new Schema({StatusId : String});
-
-const ProviderScehma = new Schema({ProviderId : String});
 
 // const PaymentSchema = new Schema ({ PaymentId = String})
 
 
 const BookingSchema = new Schema({
 
-	service: [ServiceSchema],
-	customer: [UserSchema],
-	provider: [ProviderScehma],
-	date: Date,
-	timeslot: String,
-	status: [StatusSchema],
-	refNo: String,
+	tripId: String,
+	userId: String,
+	quantity: Number,
+	isPaid: {type: Boolean, default: false},
+	// status: {type: String, default: "Pending"}, //Pending, (paid) In Transit, On going, Completed
 
-	locationType: String,
-
-	city: String,
-	barangay: String,
-	addressline: String,
-
-	UserRemarks: String,
-	PaymentType: String,
-
-
+	createAt: {type: Date, default: moment()},
+	updatedAt: {type: Date, default: moment()},
 	// paymentStatus
 	// timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+	// locationType: String,
+	// city: String,
+	// barangay: String,
+	// addressline: String,
+	// userDirections: String,
+
+	// userPreferences: String,
+	// paymentType: String,
 
 
 });
