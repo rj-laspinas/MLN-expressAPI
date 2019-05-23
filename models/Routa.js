@@ -6,8 +6,9 @@ const DestinationSchema = new Schema({DestinationId : String});
 const BusRouteSchema = new Schema({
 	
 	name: String,
-	from: DestinationSchema,
-	to: DestinationSchema,
+	origin: String,
+	destination: String,
+	isActive: {type: Boolean, default: true},
 
 	createAt: {type: Date, default: moment()},
 	updatedAt: {type: Date, default: moment()},

@@ -14,14 +14,15 @@ const TripSchema = new Schema({
 	destination: String,
 	startDate: Date,
 	endDate: Date,
-	startTime: Date,
-	endTime: Date,
+	startTime: String,
+	endTime: String,
 	duration: String,
 	bookingId: [BookingSchema],
 
 	// isWeekly: {type: Boolean, default: false}, button to create weekly trip
 	isFull: {type: Boolean, default: false},
 	isCompleted: {type: Boolean, default: false},
+	isCancelled: {type: Boolean, default: false},
 
 	createAt: {type: Date, default: moment()},
 	updatedAt: {type: Date, default: moment()},

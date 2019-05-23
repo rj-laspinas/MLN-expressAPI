@@ -11,7 +11,7 @@ const VehicleSchema = new Schema({
 	seatingCap: Number,
 	isServiceable: {type: Boolean, default: true},
 	onTrip: {type: Boolean, default: true},
-	tripID: String
+	tripID: [String],
 
 });
 
