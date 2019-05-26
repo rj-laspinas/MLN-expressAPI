@@ -655,38 +655,40 @@ const moment = require("moment");
 
 					trips.forEach((trip) => {
 					
-						if(moment(endDate).isAfter(trip.startDate) && moment(endDate).isBefore(trip.endDate)) {
+						if(moment(endDate).isSameOrAfter(trip.startDate) && moment(endDate).isSameOrBefore(trip.endDate)) {
 								return res.status(500).json({
 									"message" : "Vehicle has  scheduled trip on selected dates"
 								})
 							} 
 					})
 
-				} 
-
-				Trip.create({
-					"vehicleId" : vehicleId,
-					"price": price,
-					"origin": origin,
-					"destination": destination,
-					"startDate": startDate,
-					"endDate": endDate,
-					"startTime": startTime,
-					"endTime": endTime
-				})
-					.then( trip => {
-						Vehicle.findById(trip.vehicleId).then(vehicle => {
-						vehicle.tripID.push(trip._id)
-						vehicle.save();
-							return res.json({
-								"message" : "Trip created successfully",
-								"trip": trip,
-								"vehicle": vehicle
-							})
-
-						})
-					
+				} else {
+					Trip.create({
+						"vehicleId" : vehicleId,
+						"price": price,
+						"origin": origin,
+						"destination": destination,
+						"startDate": startDate,
+						"endDate": endDate,
+						"startTime": startTime,
+						"endTime": endTime
 					})
+						.then( trip => {
+							Vehicle.findById(trip.vehicleId).then(vehicle => {
+							vehicle.tripID.push(trip._id)
+							vehicle.save();
+								return res.json({
+									"message" : "Trip created successfully",
+									"trip": trip,
+									"vehicle": vehicle
+								})
+
+							})
+						
+						})
+				}
+
+
 
 			}).catch(next)
 			
@@ -705,84 +707,132 @@ const moment = require("moment");
 
 	//UPDATE
 	router.put("/trips/:id", (req, res, next) => {
-		let newVehicleId = req.body.vehicleId;
-		let price = req.body.price;
-		let origin = req.body.origin;
-		let destination = req.body.destination;
-		let startDate = moment(req.body.startDate, "MM-DD-YYYY HH:mm", true);
-		let endDate = moment(req.body.endDate, "MM-DD-YYYY HH:mm", true);
-		let startTime = req.body.startTime;
-		let endTime = req.body.endTime;
+		let vehicleIdNew = req.body.vehicleId;
+		let priceNew = req.body.price;
+		let originNew = req.body.origin;
+		let destinationNew = req.body.destination;
+		let startDateNew = moment(req.body.startDate, "MM-DD-YYYY HH:mm", true);
+		let endDateNew = moment(req.body.endDate, "MM-DD-YYYY HH:mm", true);
+		let startTimeNew = req.body.startTime;
+		let endTimeNew = req.body.endTime;
 		
-		if(!vehicleId || !price || !startDate || !endDate || !origin || !destination){
+		if(!vehicleIdNew || !priceNew || !startDateNew || !endDateNew || !originNew || !destinationNew){
 			return res.status(500).json({
 				"message" : "Missing information, please complete all fields"
 			})
 		}
+		
+		//remove trip ids from
+					
+	
 
-		Vehicle.find({"_id" : vehicleId}).then(function(vehicle, err){
+		Trip.findById(req.params.id).then((trip) =>{
 
-			if(err){
-				return res.status(500).json({
-					"error": "an error occured while querying the collection"
-				})
-			}
+			// return res.json({
+			// 	oGvehicle: trip.vehicleId,
+			// 	newVehicle: vehicleIdNew
+			// });
 
-			if(vehicle.isServiceable == false) {
-				return res.status(500).json({
-					"message": "Vehicle is currently not Available/Serviceable"
-				})
-			}
+			// if(vehicleIdNew !== trip.vehicleId) {
 
-			Trip.findById(req.params.id).then(function(trip, err, next){
-				let vehicle = trip.vehicleId;
-
+		//check if new vehicle is serviceable and no overlapping schedule (dates)
+			Trip.find({"vehicleId" : vehicleIdNew}).then((trips, err) => {
+				
+				// return res.json(vehicleIdNew);
 				if(err){
 					return res.status(500).json({
-						"error": "an error occured while processing request"
+						error: "an error occured while processing request"
 					})
 				}
-		
-				if(moment(endDate).isAfter(trip.startDate) && moment(endDate).isBefore(trip.endDate)){
-						return res.status(500).json({
-							"message" : "Vehicle has  scheduled trip on selected dates"
-						})
-					}
 
-				Vehicle.findById()
+				if(trips.length > 0) {
 
-
-				Trip.create({
-					"vehicleId" : newVehicleId,
-					"price": newprice,
-					"origin": neworigin,
-					"destination": newdestination,
-					"startDate": newstartDate,
-					"endDate": newendDate,
-					"startTime": newstartTime,
-					"endTime": newendTime
-				})
-				.then( newTrip => {
-					Vehicle.findById(newTrip.vehicleId).then(newVehicle => {
-					newVehicle.tripID.push(newTrip._id)
-					newVehicle.save();
-						return res.json({
-							"message" : "Trip was successfully updated",
-							"trip": trip,
-							"newVehicle": newVehicle,
-							"oldVehicle": vehicle,
+					trips.forEach((trip) => {
+					
+						if(moment(endDateNew).isSameOrAfter(trip.startDate) && moment(endDateNew).isSameOrBefore(trip.endDate)) {
+							return res.status(500).json({
+								"message" : "Vehicle has scheduled trip on selected dates"
+							})
+						} 
 					})
-				
-				}) 
+				}
+
+				// return res.json({trips})
 			})
-			.catch(next)
+
+			// return res.json({
+			// 	oGvehicle: trip.vehicleId,
+			// 	newVehicle: vehicleIdNew
+			// });
+
+			Vehicle.findById(vehicleIdNew).then((newVehicle, err) => {
+				// return res.json(newVehicle);
+				if(err){
+					return res.status(500).json({
+						error: "an error occured while querying the collection"
+					})
+				}
+
+				if(newVehicle.isServiceable == false) {
+					return res.status(500).json({
+						message: "Vehicle is currently not Available/Serviceable"
+					})
+				}
+
+				for(let i= 0; i<newVehicle.length; i++ ){
+					if(newVehicle.tripID == trip.id){
+						return res.json({
+							message : "duplicate tripId cannot be pushed to Vehicles TripIds"
+						});
+						
+					}
+					
+				}
+
+				newVehicle.tripID.push(trip._id)
+				newVehicle.save();
+				
+			}).catch(next)
+
+
+			Vehicle.findById(trip.vehicleId).then((oGvehicle) =>{
+				
+				oGvehicle.tripID.pull(trip._id)
+				oGvehicle.save();
+				return res.json(oGvehicle);
+			})
+
+
+			// Trip.updateOne(
+			// 	{_id:req.params.id},
+			// 	{
+			// 	"vehicleId" : vehicleIdNew,
+			// 	"price": priceNew,
+			// 	"origin": originNew,
+			// 	"destination": destinationNew,
+			// 	"startDate": startDateNew,
+			// 	"endDate": endDateNew,
+			// 	"startTime": startTimeNew,
+			// 	"endTime": endTimeNew
+			// }).then((updatedTrip) => {
+			// 	updatedTrip.save((err)=>{
+			// 		if(!err){
+			// 			return res.json({
+			// 				message: "Trip was updated successfully",
+			// 				trip: "updatedTrip",
+							// newVehicle: "newVehicle",
+							// oGvehicle: "oGvehicle"
+			// 			})
+			// 		}
+			// 	})
+			// })
 
 		}).catch(next)
-			
-	})
-})
 		
+	})
 
+
+		//Validation for new Vehicle
 
 
 	// //DELETE - DISABLE trip

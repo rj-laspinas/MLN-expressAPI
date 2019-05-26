@@ -10,7 +10,7 @@ const VehicleSchema = new Schema({
 	image: String,
 	seatingCap: Number,
 	isServiceable: {type: Boolean, default: true},
-	onTrip: {type: Boolean, default: true},
+	onTrip: {type: Boolean, default: false},
 	tripID: [String],
 
 });
