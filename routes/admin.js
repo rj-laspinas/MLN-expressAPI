@@ -441,16 +441,16 @@ const moment = require("moment");
 				vehicle.isServiceable = false;
 				vehicle.save();
 				return res.json({
-				"message": "Entry was successfully Deactivated",
-				"vehicle": vehicle
-			})
+					"message": "Entry was successfully Deactivated",
+					"vehicle": vehicle
+				})
 			} else  {
 				vehicle.isServiceable = true;
 				vehicle.save();
 				return res.json({
-				"message": "Entry was successfully Activated",
-				"vehicle": vehicle
-			})
+					"message": "Entry was successfully Activated",
+					"vehicle": vehicle
+					})
 			}
 		})
 	})
@@ -614,7 +614,16 @@ const moment = require("moment");
 		.catch(next)
 	})
 
-	//store
+		//SHOW
+	router.get("/trips/:id", (req, res, next) => {
+		Trip.findById(req.params.id)
+		.then(trip => {
+			return res.json(trip)
+		})
+		.catch(next)
+	})
+
+	// store
 	router.post("/trips", (req, res, next) => {
 		let vehicleId = req.body.vehicleId;
 		let price = req.body.price;
@@ -631,7 +640,12 @@ const moment = require("moment");
 			})
 		}
 
-		Vehicle.find({"_id" : vehicleId}).then(function(vehicle, err){
+		// return res.json(req.body)
+
+		Vehicle.findById(vehicleId).then(function(vehicle, err){
+			// return res.json({v : vehicle,e : err})
+			seats = vehicle.seatingCap;
+
 			if(err){
 				return res.status(500).json({
 					"error": "an error occured while querying the collection"
@@ -645,24 +659,15 @@ const moment = require("moment");
 			}
 
 			Trip.find({"vehicleId" : vehicleId}).then(function(trips, err, next){
+				// return res.json(trips)
 				if(err){
 					return res.status(500).json({
 						"error": "an error occured while processing request"
 					})
 				}
+				
 
-				if(trips.length > 0) {
-
-					trips.forEach((trip) => {
-					
-						if(moment(endDate).isSameOrAfter(trip.startDate) && moment(endDate).isSameOrBefore(trip.endDate)) {
-								return res.status(500).json({
-									"message" : "Vehicle has  scheduled trip on selected dates"
-								})
-							} 
-					})
-
-				} else {
+				if(trips.length == 0) {
 					Trip.create({
 						"vehicleId" : vehicleId,
 						"price": price,
@@ -671,38 +676,71 @@ const moment = require("moment");
 						"startDate": startDate,
 						"endDate": endDate,
 						"startTime": startTime,
-						"endTime": endTime
+						"endTime": endTime,
+						"seats": vehicle.seatingCap
 					})
-						.then( trip => {
-							Vehicle.findById(trip.vehicleId).then(vehicle => {
-							vehicle.tripID.push(trip._id)
+					.then( newtrip => {
+						return res.json(newtrip);
+						Vehicle.findById(newtrip.vehicleId).then(vehicle => {
+						vehicle.tripID.push(newtrip._id)
+						vehicle.save();
+							return res.json({
+								"message" : "Trip created successfully",
+								"trip": newtrip,
+								"vehicle": vehicle
+							})
+
+						})	
+					})
+				}  else {
+					let dateConflict = false;
+
+					trips.forEach((trip) => {
+
+						if(moment(endDate).isSameOrAfter(trip.startDate) && moment(endDate).isSameOrBefore(trip.endDate)) {
+								dateConflict = true;
+						} 	
+					})
+					console.log(dateConflict)
+					// return res.json(dateConflict);
+
+					if(dateConflict == false) {
+						Trip.create({
+								"vehicleId" : vehicleId,
+								"price": price,
+								"origin": origin,
+								"destination": destination,
+								"startDate": startDate,
+								"endDate": endDate,
+								"startTime": startTime,
+								"endTime": endTime,
+								"seats": seats
+						})
+						.then( newtrip => {
+							Vehicle.findById(newtrip.vehicleId).then(vehicle => {
+							vehicle.tripID.push(newtrip._id)
 							vehicle.save();
 								return res.json({
 									"message" : "Trip created successfully",
-									"trip": trip,
+									"trip": newtrip,
 									"vehicle": vehicle
 								})
 
-							})
-						
+							})	
 						})
-				}
+						
+					} else {
+						return res.json({
+							message : "Trip creation could not push through, Vehicle has a trip on dates selected."
+						})
+					}
 
-
+				}		
 
 			}).catch(next)
 			
 		}).catch(next)
 		
-	})
-
-	//SHOW
-	router.get("/trips/:id", (req, res, next) => {
-		Trip.findById(req.params.id)
-		.then(trip => {
-			return res.json(trip)
-		})
-		.catch(next)
 	})
 
 	//UPDATE
@@ -724,17 +762,18 @@ const moment = require("moment");
 		
 		//remove trip ids from
 					
-	
-
 		Trip.findById(req.params.id).then((trip) =>{
 
-			// return res.json({
-			// 	oGvehicle: trip.vehicleId,
-			// 	newVehicle: vehicleIdNew
-			// });
+			if(trip.vehicleId == vehicleIdNew){
 
-			// if(vehicleIdNew !== trip.vehicleId) {
-
+				Trip.findByIdAndUpdate(req.params.id, req.body, {new: true})
+				.then(tripUpdate => {
+					return res.status(200).json({
+						message: "Trip updated successfully",
+						trip: tripUpdate
+					})
+				})
+			}
 		//check if new vehicle is serviceable and no overlapping schedule (dates)
 			Trip.find({"vehicleId" : vehicleIdNew}).then((trips, err) => {
 				
@@ -755,15 +794,10 @@ const moment = require("moment");
 							})
 						} 
 					})
-				}
-
-				// return res.json({trips})
+				}				
 			})
 
-			// return res.json({
-			// 	oGvehicle: trip.vehicleId,
-			// 	newVehicle: vehicleIdNew
-			// });
+			//---
 
 			Vehicle.findById(vehicleIdNew).then((newVehicle, err) => {
 				// return res.json(newVehicle);
@@ -785,213 +819,87 @@ const moment = require("moment");
 							message : "duplicate tripId cannot be pushed to Vehicles TripIds"
 						});
 						
-					}
-					
+					}	
 				}
 
 				newVehicle.tripID.push(trip._id)
 				newVehicle.save();
+
+				Vehicle.findById(trip.vehicleId).then((oGvehicle) =>{
+					oGvehicle.tripID.pull(trip._id)
+					oGvehicle.save();
+				})
+
+				trip.vehicleId = vehicleIdNew;
+				trip.price = priceNew;
+				trip.origin = originNew;
+				trip.destination = destinationNew;
+				trip.startDate = startDateNew;
+				trip.endDate = endDateNew;
+				trip.seats = newVehicle.seatingCap;
+				trip.startTime = startTimeNew;
+				trip.endTime = endTimeNew;
+				trip.save();
+
+				return res.status(200).json({
+					message : "Trip was updated successfully",
+					trip: trip
+				})
 				
 			}).catch(next)
-
-
-			Vehicle.findById(trip.vehicleId).then((oGvehicle) =>{
-				
-				oGvehicle.tripID.pull(trip._id)
-				oGvehicle.save();
-				return res.json(oGvehicle);
-			})
-
-
-			// Trip.updateOne(
-			// 	{_id:req.params.id},
-			// 	{
-			// 	"vehicleId" : vehicleIdNew,
-			// 	"price": priceNew,
-			// 	"origin": originNew,
-			// 	"destination": destinationNew,
-			// 	"startDate": startDateNew,
-			// 	"endDate": endDateNew,
-			// 	"startTime": startTimeNew,
-			// 	"endTime": endTimeNew
-			// }).then((updatedTrip) => {
-			// 	updatedTrip.save((err)=>{
-			// 		if(!err){
-			// 			return res.json({
-			// 				message: "Trip was updated successfully",
-			// 				trip: "updatedTrip",
-							// newVehicle: "newVehicle",
-							// oGvehicle: "oGvehicle"
-			// 			})
-			// 		}
-			// 	})
-			// })
 
 		}).catch(next)
 		
 	})
 
+	// TOGGLE CANCEL TRIP
 
-		//Validation for new Vehicle
-
-
-	// //DELETE - DISABLE trip
-	// router.delete("/trips/:id/del", (req, res, next) => {
-	// 	Trip.findByIdAndUpdate(req.params.id, {isActive: false}, {new: true})
-	// 	.then(trip => {
-	// 		return res.json({
-	// 			"message": "Entry was successfully Deactivated",
-	// 			"trip": trip
-	// 		})
-	// 	})
-	// 	.catch(next)
-	// })
-
-
-	// // ENABLE/DISABLE TOGGLEtrip
-
-	// router.delete("/trips/:id/status", (req, res, next) => {
+	router.delete("/trips/cancel/:id/", (req, res, next) => {
 		
-	// 	Trip.findById(req.params.id).then(function(trip){
+		Trip.findById(req.params.id).then(trip => {
+			//  
+			trip.isCancelled = true;
+			trip.save();
 
-	// 		if(trip.isServiceable == true) {
-	// 			trip.isServiceable = false;
-	// 			trip.save();
-	// 			return res.json({
-	// 			"message": "Entry was successfully Deactivated",
-	// 			"trip": trip
-	// 		})
-	// 		} else  {
-	// 			trip.isServiceable = true;
-	// 			trip.save();
-	// 			return res.json({
-	// 			"message": "Entry was successfully Activated",
-	// 			"trip": trip
-	// 		})
-	// 		}
-	// 	})
-	// })
+			Vehicle.findById(trip.vehicleId).then( vehicle => {
+				vehicle.tripID.pull(trip._id)
+				vehicle.save();
+			})
 
-	// 	router.delete("/trips/:id/trip", (req, res, next) => {
-		
-	// 	Trip.findById(req.params.id).then(function(trip){
+			return res.json({
+				message : "The trip from "+ trip.origin + " to " + trip.destination + " scheduled on "+moment(trip.startDate, "MM-DD-YYYY HH:mm", true)+"-"+moment(trip.startDate, "MM-DD-YYYY HH:mm", true)+" was cancelled successfully",
+				trip : trip
+			})
 
-	// 		if(trip.onTrip == true) {
-	// 			trip.onTrip = false;
-	// 			trip.save();
-	// 			return res.json({
-	// 			"trip": trip
-	// 		})
-	// 		} else  {
-	// 			trip.onTrip = true;
-	// 			trip.save();
-	// 			return res.json({
-	// 			"trip": trip
-	// 		})
-	// 		}
-	// 	})
-	// })
+
+
+		})
+	})
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // BOOKING CRUD
 
 // booking CONTROLLER 
 
-	// //index
+	//index
 	// router.get("/booking", (req, res, next) => {
 	// 	Booking.find({})
-	// 	.then(vehicles => {
-	// 		return res.json(vehicles)
+	// 	.then(bookings => {
+	// 		return res.json(bookings)
 	// 	})
 	// 	.catch(next)
-	// })
-
-	// //store
-	// router.post("/booking", (req, res, next) => {
-	// 	let tripId = req.body.tripId;
-	// 	let userId = req.body.userId;
-	// 	let quantity = req.body.quantity;
-
-
-
-	// 	if(!tripId || !userId || !quantity){
-	// 		return res.status(500).json({
-	// 			"message" : "Missing information, please complete all fields"
-	// 		})
-	// 	}
-
-	// 	Booking.find({"tripId" : tripId, "userId": userId}).then(function(vehicle, err){
-	// 		if(err){
-	// 			return res.status(500).json({
-	// 				"error": "an error occured while querying the collection"
-	// 			})
-	// 		}
-
-	// 		if(Booking.length > 0){
-	// 			return res.status(500).json({
-	// 				"error": "Booking already exists"
-	// 			})
-	// 		}
-
-
-	// 		newBooking.save(function(err){
-	// 		if(!err){
-	// 			return res.json({
-	// 				"message" : "New booking added to fleet"
-	// 			})
-	// 		}
-	// 	})
-
-	// })
-			
 	// })
 
 	// //SHOW
 	// router.get("/booking/:id", (req, res, next) => {
 	// 	Booking.findById(req.params.id)
-	// 	.then(vehicle => {
-	// 		return res.json(vehicle)
+	// 	.then(booking => {
+	// 		return res.json(booking)
 	// 	})
 	// 	.catch(next)
 	// })
 
-	// //UPDATE
-	// router.put("/booking/:id", (req, res, next) => {
-	// 	Booking.findByIdAndUpdate(req.params.id, req.body, {new: true})
-	// 	.then(vehicle => {
-	// 		return res.json({
-	// 			"message": "Entry updated successfully",
-	// 			"booking": booking
-	// 		})
-	// 	})
-	// 	.catch(next)
-	// })
-
-
-	// // ENABLE/DISABLE TOGGLEvehicle
-
-	// router.delete("/booking/:id", (req, res, next) => {
-		
-	// 	Booking.findById(req.params.id).then(function(vehicle){
-
-	// 		if(booking.isPaid == true) {
-	// 			booking.isPaid = false;
-	// 			booking.save();
-	// 			return res.json({
-	// 			"message": "Entry was successfully Deactivated",
-	// 			"booking": booking
-	// 		})
-	// 		} else  {
-	// 			booking.isPaid = true;
-	// 			booking.save();
-	// 			return res.json({
-	// 			"message": "Entry was successfully Activated",
-	// 			"booking": booking
-	// 		})
-	// 		}
-	// 	})
-	// })
-
+	
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//error handling middleware

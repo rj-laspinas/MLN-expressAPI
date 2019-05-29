@@ -35,3 +35,18 @@ function verifyAdmin(req, res, next){
 //admin only access
 const  admin = require("./routes/admin.js");
 app.use("/admin", [passport.authenticate("jwt", {session:false}), verifyAdmin], admin);
+
+
+//NON-ADMIN ACCESS
+function verifyNonAdmin(req, res, next){
+	const isAdmin = req.user.isAdmin;
+	if(isAdmin == false) {
+		next()
+	} else {
+		res.redirect(403,'/login')
+	}
+}
+
+
+const  nonAdmin = require("./routes/nonAdmin.js");
+app.use("/nonAdmin", [passport.authenticate("jwt", {session:false}), verifyNonAdmin], nonAdmin);

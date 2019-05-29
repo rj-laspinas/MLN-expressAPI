@@ -2,13 +2,12 @@ const mongoose = require("mongoose");
 const moment = require("moment");
 const Schema = mongoose.Schema;
 
-const BookingSchema = new Schema({bookingId : String});
-
 const TripSchema = new Schema({
 	
 	
 	vehicleId : String,
 	price: Number,
+	seats: Number,
 
 	origin: String,
 	destination: String,
@@ -17,7 +16,7 @@ const TripSchema = new Schema({
 	startTime: String,
 	endTime: String,
 	duration: String,
-	bookingId: [BookingSchema],
+	bookedPassengers: [String],
 
 	// isWeekly: {type: Boolean, default: false}, button to create weekly trip
 	isFull: {type: Boolean, default: false},

@@ -12,10 +12,14 @@ const BookingSchema = new Schema({
 	tripId: String,
 	userId: String,
 	quantity: Number,
-	isPaid: {type: Boolean, default: false},
-	// status: {type: String, default: "Pending"}, //Pending, (paid) In Transit, On going, Completed
+	amount: Number,
+	bookingDate: Date,
+	chargeId: String,
+	isCancelled: {type: Boolean, default: false},
+	bookingType: {type: String, default: "booking"}, //booking or cancellation
+	paymentType: {type: String, default: "stripe"},
 
-	createAt: {type: Date, default: moment()},
+	// createAt: {type: Date, default: moment()},
 	updatedAt: {type: Date, default: moment()},
 	// paymentStatus
 	// timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

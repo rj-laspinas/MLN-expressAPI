@@ -14,6 +14,7 @@ const UserSchema = new Schema({
 	isAdmin: {type: Boolean, default: false},
 	isActive: {type: Boolean, default: true},
 	isVerified: {type: Boolean,	default: false},
+	
 
 	// isProvider: {type: Boolean,	default: false},
 	// Profile: [ProviderSchema],
