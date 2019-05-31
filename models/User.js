@@ -6,14 +6,14 @@ const UserSchema = new Schema({
 
 	fname: String,
 	lname: String,
-	mobile: Number,
+	mobile: String,
 	email: String,
 	password: String,
 
 	
 	isAdmin: {type: Boolean, default: false},
 	isActive: {type: Boolean, default: true},
-	isVerified: {type: Boolean,	default: false},
+	isGuest: {type: Boolean,	default: false},
 	
 
 	// isProvider: {type: Boolean,	default: false},

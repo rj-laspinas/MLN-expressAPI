@@ -6,7 +6,7 @@ const UserModel = require("../models/User");
 
 const bcrypt = require("bcrypt-nodejs");
 
-router.post("/register", (req, res) => {
+router.post("/user", (req, res) => {
 	let email = req.body.email;
 	let password = req.body.password;
 	let mobile = req.body.mobile;
@@ -16,20 +16,20 @@ router.post("/register", (req, res) => {
 
 	if(!email || !password || !mobile || !fname || !lname ){
 		return res.status(500).json({
-			"error":"Missing credentials"
+			"message":"Missing credentials"
 		})
 	}
 
 	UserModel.find({"email" : email, "mobile": mobile}).then(function(user, err){
 		if(err){
 			return res.status(500).json({
-				"error": "an error occured while querying the users collection"
+				"message": "an error occured while querying the users collection"
 			})
 		}
 
 		if(user.length > 0){
 			return res.status(500).json({
-				"error": "User already exists"
+				"message": "User already exists"
 			})
 		}
 

@@ -135,7 +135,7 @@ const moment = require("moment");
 
 	//index
 	router.get("/booking", (req, res, next) => {
-		Booking.find({})
+		Booking.find({useId: req.user.id})
 		.then(bookings => {
 			return res.json(bookings)
 		})
@@ -144,11 +144,13 @@ const moment = require("moment");
 
 	//SHOW
 	router.get("/booking/:id", (req, res, next) => {
-		Booking.findById(req.params.id)
+
+		Booking.find({userId: req.user.id, _id: req.params.id})
 		.then(booking => {
 			return res.json(booking)
 		})
 		.catch(next)
+
 	})
 
 	// STORE
@@ -191,7 +193,7 @@ const moment = require("moment");
 			//STRIPE CHARGE
 			stripe.customers.create({
 				email : req.user.email,
-				description: req.user.fname + " " + req.user.lname +" has booked a trip from " + trip.origin + "-" + trip.destination + "departing on " + trip.startDate +".",
+				description: req.user.fname + " " + req.user.lname +" has booked a trip from " + trip.origin + "-" + trip.destination + " departing on " + trip.startDate +".",
 				source : "tok_amex"
 			})
 			.then(customer => {
@@ -230,83 +232,72 @@ const moment = require("moment");
 		}).catch(next)
 
 	})
-	// 	Booking.find({"tripId" : tripId, "userId": userId}).then(function(vehicle, err){
-	// 		if(err){
-	// 			return res.status(500).json({
-	// 				"error": "an error occured while querying the collection"
-	// 			})
-	// 		}
 
-	// 		if(Booking.length > 0){
-	// 			return res.status(500).json({
-	// 				"error": "Booking already exists"
-	// 			})
-	// 		}
+	router.delete("/booking/:id", (req, res, next) => {
 
-
-	// 		newBooking.save(function(err){
-	// 		if(!err){
-	// 			return res.json({
-	// 				"message" : "New booking added to fleet"
-	// 			})
-	// 		}
-	// 	})
-
-	// })
+		Booking.findById(req.params.id).then( booking => {
 			
-	// })
+			User.findById(booking.userId).then(user => {
+				if(user.isGuest == false){
+					if(user._id != req.user._id){
+						return res.json({
+							message: "You are not allowed to cancel this trip."
+						})
+					}
+				}
+			})
+
+			if(booking.isCancelled == true) {
+				return res.json({
+					message : "Booking has already been cancelled."
+				})
+			}
+
+			Trip.findById(booking.tripId).then( trip => {
+				if(moment().isSameOrAfter(moment(trip.startDate).add(4, 'h'), 'hour')){
+					return res.status(422).json({
+						message: "Trip cancellation 4 hours before before schedule is not allowed"
+					})
+				}
+
+				// return res.json(trip)
+
+				stripe.refunds.create({
+					charge: booking.chargeId
+				})
+				.then(refund => {
+					booking.isCancelled = true;
+					booking.save();
+
+					trip.seats += booking.quantity;
+					trip.bookedPassengers.pull(req.params.id);
+					trip.save();
+
+					Booking.create({
+						tripId: booking.tripId,
+						userId: req.user._id,
+						quantity: -booking.quantity,
+						amount: -booking.amount,
+						bookingDate: moment(),
+						chargeId: refund.id,
+						isCancelled: true,
+						bookingType: "cancellation"
+					})
+					.then( booking => {
+						return res.json({
+							message: "You have successfully cancelled trip, refund will reflect in your account not later than 60 days"
+						}).catch(next)
+					}).catch(next)
+				}).catch(next)
+			}).catch(next)
+		}).catch(next)
+	})
+
+
 
 	
 
-	// //UPDATE
-	// router.put("/booking/:id", (req, res, next) => {
-	// 	Booking.findByIdAndUpdate(req.params.id, req.body, {new: true})
-	// 	.then(vehicle => {
-	// 		return res.json({
-	// 			"message": "Entry updated successfully",
-	// 			"booking": booking
-	// 		})
-	// 	})
-	// 	.catch(next)
-	// })
-
-	//STORE
-	// router.post("/booking", (req, res, next) => {
-	// 		let tripId = req.body.tripId;
-	// 		let userId = req.body.userId;
-	// 		let quantity = req.body.quantity;
-
-
-	// 		if(!tripId || !userId || !quantity){
-	// 			return res.status(500).json({
-	// 				"message" : "Missing information, please complete all fields"
-	// 			})
-	// 		}
-
-	// 		Booking.find({tripdId : tripId}).then((trips, err) =>{
-
-	// 			if(err){
-	// 				return res.status(500).json({
-	// 					"error": "an error occured while querying the collection"
-	// 				})
-	// 			}
-
-	// 			return res.json(booking.quantity.length)
-	// 			for(i=0; i < booking.quantity.length; i++) {
-	// 				total += booking.quantity[i];
-	// 			}
-
-	// 			Vehicle.findById(trip.vehicleId).then(vehicle => {
-	// 				let seatingCap = vehicle.seatingCap;
-
-	// 				if(seatingCap <=  (total + quantity)) {
-	// 					return res.json({
-	// 						message : "Trip can no longer accomodate quantity"
-	// 					})
-	// 				}
-	// 			})
-	// 		})
-	// 	})
+	
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//error handling middleware
 	router.use((err, req, res, next) => {

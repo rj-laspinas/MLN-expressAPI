@@ -867,7 +867,7 @@ const moment = require("moment");
 			})
 
 			return res.json({
-				message : "The trip from "+ trip.origin + " to " + trip.destination + " scheduled on "+moment(trip.startDate, "MM-DD-YYYY HH:mm", true)+"-"+moment(trip.startDate, "MM-DD-YYYY HH:mm", true)+" was cancelled successfully",
+				message : "The trip from "+ trip.origin + " to " + trip.destination + " scheduled on "+ moment(trip.startDate).format("MM-DD-YYYY HH:mm")+"-"+moment(trip.endDate).format("MM-DD-YYYY HH:mm")+" was cancelled successfully",
 				trip : trip
 			})
 
@@ -881,23 +881,23 @@ const moment = require("moment");
 
 // booking CONTROLLER 
 
-	//index
-	// router.get("/booking", (req, res, next) => {
-	// 	Booking.find({})
-	// 	.then(bookings => {
-	// 		return res.json(bookings)
-	// 	})
-	// 	.catch(next)
-	// })
+	//INDEX
+	router.get("/booking", (req, res, next) => {
+		Booking.find({})
+		.then(bookings => {
+			return res.json(bookings)
+		})
+		.catch(next)
+	})
 
-	// //SHOW
-	// router.get("/booking/:id", (req, res, next) => {
-	// 	Booking.findById(req.params.id)
-	// 	.then(booking => {
-	// 		return res.json(booking)
-	// 	})
-	// 	.catch(next)
-	// })
+	//SHOW
+	router.get("/booking/:id", (req, res, next) => {
+		Booking.findById(req.params.id)
+		.then(booking => {
+			return res.json(booking)
+		})
+		.catch(next)
+	})
 
 	
 

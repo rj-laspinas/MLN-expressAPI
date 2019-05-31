@@ -11,7 +11,7 @@ const TripSchema = new Schema({
 
 	origin: String,
 	destination: String,
-	startDate: Date,
+	startDate: {type: Date, min: moment()},
 	endDate: Date,
 	startTime: String,
 	endTime: String,
