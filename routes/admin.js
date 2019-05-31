@@ -187,16 +187,16 @@ const moment = require("moment");
 	router.post("/categories", (req, res, next) => {
 		let category = req.body.category;
 		let name = req.body.name;
-		let image = req.body.image;
+		// let image = req.body.image;
 
 
-		if(!name || !image){
+		if(!name){
 			return res.status(500).json({
 				"message" : "Missing information, please complete all fields"
 			})
 		}
 
-		Category.find({"name": name, "image": image}).then(function(category, err){
+		Category.find({"name": name}).then(function(category, err){
 			if(err){
 				return res.status(500).json({
 					"error" : "an error has occured while processing query"
@@ -342,7 +342,14 @@ const moment = require("moment");
 	router.get("/vehicles", (req, res, next) => {
 		Vehicle.find({})
 		.then(vehicles => {
-			return res.json(vehicles)
+			Category.find({})
+			.then( categories => {
+				return res.json({
+					vehicles: vehicles,
+					categories: categories
+				})
+			})
+			
 		})
 		.catch(next)
 	})
@@ -605,6 +612,47 @@ const moment = require("moment");
 //-------------------------------------------------------------------------------------
 
 // TRIP CONTROLLER 
+	//Trip Programmer
+
+	Trip.find({})
+	.then((trips, err) => {
+		if(err){
+			return res.status(err.status).json({
+				error: err
+			})
+		}
+		trips.forEach((trip) => {
+			if(moment().isSameorAfter(trip.startDate, 'hour')){
+				Vehicle.findById(trip.vehicleId)
+				.then((vehicle, err) => {
+					if(err){
+						return res.status(err.status).json({
+							error: "error looking for specified instructor"
+						})
+					}
+					vehicle.onTrip = true;
+					vehicle.save();
+				})
+			}
+
+			if(moment().isAfter(trip.endDate, 'hour')){
+				trip.isCompleted = true;
+				trip.save();
+				Vehicle.findById(trip.vehicleId)
+				.then((vehicle, err) => {
+					if(err){
+						return res.status(err.status).json({
+							error: "error looking for specified instructor"
+						})
+					}
+					vehicle.onTrip = false;
+					vehicle.save();
+				})
+			}
+		})
+	})
+
+
 	//index
 	router.get("/trips", (req, res, next) => {
 		Trip.find({})
