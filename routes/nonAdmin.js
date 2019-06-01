@@ -135,9 +135,19 @@ const moment = require("moment");
 
 	//index
 	router.get("/booking", (req, res, next) => {
-		Booking.find({useId: req.user.id})
+		Booking.find({userId: req.user.id})
 		.then(bookings => {
-			return res.json(bookings)
+			Trip.find({})
+			.then(trips =>{
+				Vehicle.find({})
+				.then( vehicles => {
+					return res.json({
+						bookings: bookings,
+						trips: trips,
+						vehicles: vehicles
+					})
+				})
+			})
 		})
 		.catch(next)
 	})
@@ -147,7 +157,17 @@ const moment = require("moment");
 
 		Booking.find({userId: req.user.id, _id: req.params.id})
 		.then(booking => {
-			return res.json(booking)
+			Trip.findById(booking.tripId)
+			.then(trip =>{
+				Vehicle.findById(trip.vehicleId)
+				.then( vehicle => {
+					return res.json({
+						booking: booking,
+						trip: trip,
+						vehicle: vehicle
+					})
+				})
+			})
 		})
 		.catch(next)
 

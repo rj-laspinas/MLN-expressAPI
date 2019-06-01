@@ -209,11 +209,12 @@ const moment = require("moment");
 				})
 			}
 
-			Category.create(req.body).then(category => {
-			return res.json({
-				"message" : "Entry created successfully",
-				"category" : category
-				})
+			Category.create(req.body)
+			.then(category => {
+				return res.json({
+					"message" : "Entry created successfully",
+					"category" : category
+					})
 			})
 		})
 		.catch(next)
@@ -357,19 +358,20 @@ const moment = require("moment");
 	//store
 	router.post("/vehicles", (req, res, next) => {
 		let category = req.body.category;
+		let vehicleType = req.body.vehicleType;
 		let vehicleModel = req.body.vehicleModel;
 		let plate = req.body.plate;
-		let image = req.body.image;
+		// let image = req.body.image;
 		let seatingCap = req.body.seatingCap;
 
 
-		if(!category || !vehicleModel || !plate || !image || !seatingCap){
+		if(!category || !vehicleModel || !plate || !vehicleType || !seatingCap){
 			return res.status(500).json({
 				"message" : "Missing information, please complete all fields"
 			})
 		}
 
-		Vehicle.find({"image" : image, "plate": plate}).then(function(vehicle, err){
+		Vehicle.find({plate: req.body.plate}).then((vehicle, err) =>{
 			if(err){
 				return res.status(500).json({
 					"error": "an error occured while querying the collection"
@@ -382,33 +384,36 @@ const moment = require("moment");
 				})
 			}
 
-			let newVehicle = Vehicle({
-					"category": category,
-					"vehicleModel": vehicleModel,
-					"plate": plate,
-					"image": image,
-					"seatingCap": seatingCap,
+			Vehicle.create(req.body)
+			.then((newVehicle, err) => {
+				if(!err){
+					return res.json({
+						"message" : "New vehicle added to fleet",
+						vehicle : newVehicle
+					})
+				}
 			})
-
-			newVehicle.save(function(err){
-			if(!err){
-				return res.json({
-					"message" : "New vehicle added to fleet"
-				})
-			}
+			.catch(next)
 		})
-
-		})
-
-		
-		
+		.catch(next)
 	})
 
 	//SHOW
 	router.get("/vehicles/:id", (req, res, next) => {
 		Vehicle.findById(req.params.id)
 		.then(vehicle => {
-			return res.json(vehicle)
+			Category.find({})
+			.then( categories =>{
+				Trip.find({"vehicleId": vehicle._id})
+				.then(trips =>{
+					return res.json({
+						vehicle: vehicle,
+						categories: categories,
+						trips: trips
+					})
+				})
+			})
+			
 		})
 		.catch(next)
 	})
@@ -416,31 +421,20 @@ const moment = require("moment");
 	//UPDATE
 	router.put("/vehicles/:id", (req, res, next) => {
 		Vehicle.findByIdAndUpdate(req.params.id, req.body, {new: true})
-		.then(vehicle => {
-			return res.json({
-				"message": "Entry updated successfully",
-				"vehicle": vehicle
-			})
+		.then((vehicle, err) => {
+			if(!err){
+				return res.json({
+					"message": "Entry updated successfully",
+					"vehicle": vehicle
+				})
+			}
 		})
 		.catch(next)
 	})
-
-	//DELETE - DISABLE vehicle
-	router.delete("/vehicles/:id/del", (req, res, next) => {
-		Vehicle.findByIdAndUpdate(req.params.id, {isActive: false}, {new: true})
-		.then(vehicle => {
-			return res.json({
-				"message": "Entry was successfully Deactivated",
-				"vehicle": vehicle
-			})
-		})
-		.catch(next)
-	})
-
 
 	// ENABLE/DISABLE TOGGLEvehicle
 
-	router.delete("/vehicles/:id/status", (req, res, next) => {
+	router.delete("/vehicles/status/:id", (req, res, next) => {
 		
 		Vehicle.findById(req.params.id).then(function(vehicle){
 
@@ -462,7 +456,7 @@ const moment = require("moment");
 		})
 	})
 
-		router.delete("/vehicles/:id/trip", (req, res, next) => {
+		router.delete("/vehicle/trip/:id", (req, res, next) => {
 		
 		Vehicle.findById(req.params.id).then(function(vehicle){
 
@@ -622,7 +616,7 @@ const moment = require("moment");
 			})
 		}
 		trips.forEach((trip) => {
-			if(moment().isSameorAfter(trip.startDate, 'hour')){
+			if(moment().isSameOrAfter(trip.startDate, 'hour')){
 				Vehicle.findById(trip.vehicleId)
 				.then((vehicle, err) => {
 					if(err){
@@ -656,17 +650,30 @@ const moment = require("moment");
 	//index
 	router.get("/trips", (req, res, next) => {
 		Trip.find({})
-		.then(trip => {
-			return res.status(200).json(trip)
+		.then(trips => {
+			Vehicle.find({})
+			.then(vehicles => {
+				return res.status(200).json({
+					trips: trips,
+					vehicles: vehicles
+				})
+			})
+			
 		})
 		.catch(next)
 	})
 
-		//SHOW
-	router.get("/trips/:id", (req, res, next) => {
+	//SHOW
+	router.get("/trip/:id", (req, res, next) => {
 		Trip.findById(req.params.id)
 		.then(trip => {
-			return res.json(trip)
+			Vehicle.findById(trip.vehicleId)
+			.then(vehicle =>{
+				return res.json({
+					trip: trip,
+					vehicle: vehicle
+				})
+			})
 		})
 		.catch(next)
 	})
@@ -677,8 +684,8 @@ const moment = require("moment");
 		let price = req.body.price;
 		let origin = req.body.origin;
 		let destination = req.body.destination;
-		let startDate = moment(req.body.startDate, "MM-DD-YYYY HH:mm", true);
-		let endDate = moment(req.body.endDate, "MM-DD-YYYY HH:mm", true);
+		let startDate = moment(req.body.startDate).format("MM-DD-YYYY HH:mm");
+		let endDate = moment(req.body.endDate).format("MM-DD-YYYY HH:mm");
 		let startTime = req.body.startTime;
 		let endTime = req.body.endTime;
 		
@@ -688,12 +695,10 @@ const moment = require("moment");
 			})
 		}
 
-		// return res.json(req.body)
 
-		Vehicle.findById(vehicleId).then(function(vehicle, err){
+		Vehicle.findById(vehicleId)
+		.then(function(vehicle, err){
 			// return res.json({v : vehicle,e : err})
-			seats = vehicle.seatingCap;
-
 			if(err){
 				return res.status(500).json({
 					"error": "an error occured while querying the collection"
@@ -706,18 +711,16 @@ const moment = require("moment");
 				})
 			}
 
-			Trip.find({"vehicleId" : vehicleId}).then(function(trips, err, next){
-				// return res.json(trips)
+			Trip.find({"vehicleId": vehicleId, "isCompleted": false}).then(function(trips, err, next){
+				// return res.json(trips);
 				if(err){
 					return res.status(500).json({
 						"error": "an error occured while processing request"
 					})
 				}
-				
-
 				if(trips.length == 0) {
 					Trip.create({
-						"vehicleId" : vehicleId,
+						"vehicleId": vehicleId,
 						"price": price,
 						"origin": origin,
 						"destination": destination,
@@ -729,27 +732,24 @@ const moment = require("moment");
 					})
 					.then( newtrip => {
 						return res.json(newtrip);
-						Vehicle.findById(newtrip.vehicleId).then(vehicle => {
 						vehicle.tripID.push(newtrip._id)
 						vehicle.save();
 							return res.json({
 								"message" : "Trip created successfully",
 								"trip": newtrip,
 								"vehicle": vehicle
-							})
-
-						})	
+							})				
 					})
 				}  else {
 					let dateConflict = false;
 
-					trips.forEach((trip) => {
+					trips.forEach(trip => {
 
 						if(moment(endDate).isSameOrAfter(trip.startDate) && moment(endDate).isSameOrBefore(trip.endDate)) {
 								dateConflict = true;
 						} 	
 					})
-					console.log(dateConflict)
+					// console.log(dateConflict)
 					// return res.json(dateConflict);
 
 					if(dateConflict == false) {
@@ -762,24 +762,21 @@ const moment = require("moment");
 								"endDate": endDate,
 								"startTime": startTime,
 								"endTime": endTime,
-								"seats": seats
+								"seats": vehicle.seatingCap
 						})
 						.then( newtrip => {
-							Vehicle.findById(newtrip.vehicleId).then(vehicle => {
 							vehicle.tripID.push(newtrip._id)
 							vehicle.save();
 								return res.json({
 									"message" : "Trip created successfully",
 									"trip": newtrip,
 									"vehicle": vehicle
-								})
-
-							})	
+								})	
 						})
 						
 					} else {
 						return res.json({
-							message : "Trip creation could not push through, Vehicle has a trip on dates selected."
+							message : "Trip creation could not push through, Vehicle has scheduled trip on dates selected."
 						})
 					}
 
@@ -797,8 +794,8 @@ const moment = require("moment");
 		let priceNew = req.body.price;
 		let originNew = req.body.origin;
 		let destinationNew = req.body.destination;
-		let startDateNew = moment(req.body.startDate, "MM-DD-YYYY HH:mm", true);
-		let endDateNew = moment(req.body.endDate, "MM-DD-YYYY HH:mm", true);
+		let startDateNew = moment(req.body.startDate).format("MM-DD-YYYY HH:mm");
+		let endDateNew = moment(req.body.endDate).format("MM-DD-YYYY HH:mm");
 		let startTimeNew = req.body.startTime;
 		let endTimeNew = req.body.endTime;
 		
@@ -823,7 +820,8 @@ const moment = require("moment");
 				})
 			}
 		//check if new vehicle is serviceable and no overlapping schedule (dates)
-			Trip.find({"vehicleId" : vehicleIdNew}).then((trips, err) => {
+			Trip.find({"vehicleId" : vehicleIdNew, isCompleted: true})
+			.then((trips, err) => {
 				
 				// return res.json(vehicleIdNew);
 				if(err){
@@ -843,6 +841,7 @@ const moment = require("moment");
 						} 
 					})
 				}				
+			
 			})
 
 			//---
@@ -915,7 +914,7 @@ const moment = require("moment");
 			})
 
 			return res.json({
-				message : "The trip from "+ trip.origin + " to " + trip.destination + " scheduled on "+ moment(trip.startDate).format("MM-DD-YYYY HH:mm")+"-"+moment(trip.endDate).format("MM-DD-YYYY HH:mm")+" was cancelled successfully",
+				message : "The trip from "+ trip.origin + " to " + trip.destination + " scheduled for depart from " + trip.origin +" on "+ moment(trip.startDate).format("MM-DD-YYYY HH:mm")+" and arrive at " + trip.destination+ " on "+moment(trip.endDate).format("MM-DD-YYYY HH:mm")+" was cancelled successfully",
 				trip : trip
 			})
 
@@ -933,7 +932,18 @@ const moment = require("moment");
 	router.get("/booking", (req, res, next) => {
 		Booking.find({})
 		.then(bookings => {
-			return res.json(bookings)
+			Trip.find({})
+			.then(trips =>{
+				Vehicle.find({})
+				.then( vehicles => {
+					return res.json({
+						bookings: bookings,
+						trips: trips,
+						vehicles: vehicles
+					})
+				})
+			})
+			
 		})
 		.catch(next)
 	})
@@ -942,7 +952,17 @@ const moment = require("moment");
 	router.get("/booking/:id", (req, res, next) => {
 		Booking.findById(req.params.id)
 		.then(booking => {
-			return res.json(booking)
+			Trip.findById(booking.tripId)
+			.then(trip =>{
+				Vehicle.findById(trip.vehicleId)
+				.then( vehicle => {
+					return res.json({
+						booking: booking,
+						trip: trip,
+						vehicle: vehicle
+					})
+				})
+			})
 		})
 		.catch(next)
 	})

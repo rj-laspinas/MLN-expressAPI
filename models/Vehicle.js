@@ -5,9 +5,10 @@ const Schema = mongoose.Schema;
 const VehicleSchema = new Schema({
 
 	category: String,
+	vehicleType: String,
 	vehicleModel: String,
 	plate: String,
-	image: String,
+	// image: String,
 	seatingCap: Number,
 	isServiceable: {type: Boolean, default: true},
 	onTrip: {type: Boolean, default: false},
