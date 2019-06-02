@@ -653,9 +653,13 @@ const moment = require("moment");
 		.then(trips => {
 			Vehicle.find({})
 			.then(vehicles => {
-				return res.status(200).json({
-					trips: trips,
-					vehicles: vehicles
+				Category.find({})
+				.then(categories =>{
+					return res.status(200).json({
+						trips: trips,
+						vehicles: vehicles,
+						categories: categories
+					})
 				})
 			})
 			
@@ -664,15 +668,20 @@ const moment = require("moment");
 	})
 
 	//SHOW
-	router.get("/trip/:id", (req, res, next) => {
+	router.get("/trips/:id", (req, res, next) => {
 		Trip.findById(req.params.id)
 		.then(trip => {
 			Vehicle.findById(trip.vehicleId)
 			.then(vehicle =>{
-				return res.json({
-					trip: trip,
-					vehicle: vehicle
+				Vehicle.find({})
+				.then(fleet => {
+					return res.json({
+						trip: trip,
+						vehicle: vehicle,
+						fleet: fleet
+					})
 				})
+				
 			})
 		})
 		.catch(next)
@@ -684,11 +693,13 @@ const moment = require("moment");
 		let price = req.body.price;
 		let origin = req.body.origin;
 		let destination = req.body.destination;
-		let startDate = moment(req.body.startDate).format("MM-DD-YYYY HH:mm");
-		let endDate = moment(req.body.endDate).format("MM-DD-YYYY HH:mm");
-		let startTime = req.body.startTime;
-		let endTime = req.body.endTime;
-		
+		let startDate = req.body.startDate;
+		let endDate = req.body.endDate;
+		// let startDate = moment(req.body.startDate).format("MM-DD-YYYY HH:mm");
+		// let endDate = moment(req.body.endDate).format("MM-DD-YYYY HH:mm");
+
+		// return res.json(startDate);
+
 		if(!vehicleId || !price || !startDate || !endDate || !origin || !destination){
 			return res.status(500).json({
 				"message" : "Missing information, please complete all fields"
@@ -726,8 +737,6 @@ const moment = require("moment");
 						"destination": destination,
 						"startDate": startDate,
 						"endDate": endDate,
-						"startTime": startTime,
-						"endTime": endTime,
 						"seats": vehicle.seatingCap
 					})
 					.then( newtrip => {
@@ -760,8 +769,6 @@ const moment = require("moment");
 								"destination": destination,
 								"startDate": startDate,
 								"endDate": endDate,
-								"startTime": startTime,
-								"endTime": endTime,
 								"seats": vehicle.seatingCap
 						})
 						.then( newtrip => {
@@ -794,10 +801,11 @@ const moment = require("moment");
 		let priceNew = req.body.price;
 		let originNew = req.body.origin;
 		let destinationNew = req.body.destination;
-		let startDateNew = moment(req.body.startDate).format("MM-DD-YYYY HH:mm");
-		let endDateNew = moment(req.body.endDate).format("MM-DD-YYYY HH:mm");
-		let startTimeNew = req.body.startTime;
-		let endTimeNew = req.body.endTime;
+		let startDate = req.body.startDate;
+		let endDate = req.body.endDate;
+		// let startDateNew = moment(req.body.startDate).format("MM-DD-YYYY HH:mm");
+		// let endDateNew = moment(req.body.endDate).format("MM-DD-YYYY HH:mm");
+
 		
 		if(!vehicleIdNew || !priceNew || !startDateNew || !endDateNew || !originNew || !destinationNew){
 			return res.status(500).json({
@@ -884,8 +892,6 @@ const moment = require("moment");
 				trip.startDate = startDateNew;
 				trip.endDate = endDateNew;
 				trip.seats = newVehicle.seatingCap;
-				trip.startTime = startTimeNew;
-				trip.endTime = endTimeNew;
 				trip.save();
 
 				return res.status(200).json({
@@ -901,7 +907,7 @@ const moment = require("moment");
 
 	// TOGGLE CANCEL TRIP
 
-	router.delete("/trips/cancel/:id/", (req, res, next) => {
+	router.delete("/trips/:id/", (req, res, next) => {
 		
 		Trip.findById(req.params.id).then(trip => {
 			//  
