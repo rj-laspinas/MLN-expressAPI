@@ -50,3 +50,12 @@ function verifyNonAdmin(req, res, next){
 
 const  nonAdmin = require("./routes/nonAdmin.js");
 app.use("/nonAdmin", [passport.authenticate("jwt", {session:false}), verifyNonAdmin], nonAdmin);
+
+//NON-ADMIN ACCESS
+function noVefify(req, res, next){
+		next()
+
+}
+
+const  guest = require("./routes/guest.js");
+app.use("/guest", guest);

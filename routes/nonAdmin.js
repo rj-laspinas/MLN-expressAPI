@@ -115,10 +115,21 @@ const moment = require("moment");
 	//-------------------------------------------------------------------------------------
 // TRIP CONTROLLER 
 	//index
-	router.get("/trips", (req, res, next) => {
-		Trip.find({})
-		.then(trip => {
-			return res.status(200).json(trip)
+	router.post("/trips/search", (req, res, next) => {
+		let origin = req.body.origin;
+		let destination = req.body.destination;
+		let startDate = req.body.startDate;
+		let quantity = req.body.quantity;
+		let preferedDate = moment(req.body.startDate);
+
+		Trip.find({"origin": origin, "destination": destination, "startDate": preferedDate})
+		.then( trips => {
+			// trips.forEach((trip) => {
+				return res.json({
+					trips: trips,
+					quantity: quantity,
+					startDate: req.body.startDate
+				})
 		})
 		.catch(next)
 	})
@@ -134,7 +145,7 @@ const moment = require("moment");
 // BOOKING CONTROLLER 
 
 	//index
-	router.get("/booking", (req, res, next) => {
+	router.get("/bookings", (req, res, next) => {
 		Booking.find({userId: req.user.id})
 		.then(bookings => {
 			Trip.find({})
@@ -153,7 +164,7 @@ const moment = require("moment");
 	})
 
 	//SHOW
-	router.get("/booking/:id", (req, res, next) => {
+	router.get("/bookings/:id", (req, res, next) => {
 
 		Booking.find({userId: req.user.id, _id: req.params.id})
 		.then(booking => {
@@ -174,7 +185,7 @@ const moment = require("moment");
 	})
 
 	// STORE
-	router.post("/booking", (req, res, next) => {
+	router.post("/bookings", (req, res, next) => {
 		let tripId = req.body.tripId;
 		let userId =  req.user._id;
 		let quantity = req.body.quantity;
@@ -239,18 +250,19 @@ const moment = require("moment");
 						trip.seats -= 1;
 						trip.bookedPassengers.push(booking._id);
 						trip.save();
-						return res.json({
-							message: "You have booked successfully, thank you for choosing MLN Expess",
-							booking : booking
-						})
-					})
-				})
-
-			})
-
-
+						Vehicle.findById(trip.vehicleId)
+						.then( vehicle => {
+							return res.json({
+								message: "You have booked successfully, thank you for choosing MLN Expess",
+								booking : booking,
+								trip: trip,
+								vehicle: vehicle
+							})
+						}).catch(next)
+					}).catch(next)
+				}).catch(next)
+			}).catch(next)
 		}).catch(next)
-
 	})
 
 	router.delete("/booking/:id", (req, res, next) => {

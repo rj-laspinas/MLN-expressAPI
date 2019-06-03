@@ -13,9 +13,10 @@ const BookingSchema = new Schema({
 	userId: String,
 	quantity: Number,
 	amount: Number,
+	
 	bookingDate: Date,
 	chargeId: String,
-	
+
 	isCancelled: {type: Boolean, default: false},
 	bookingType: {type: String, default: "booking"}, //booking or cancellation
 	paymentType: {type: String, default: "stripe"},
