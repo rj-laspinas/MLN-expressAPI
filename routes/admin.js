@@ -772,7 +772,7 @@ const moment = require("moment");
 								"seats": vehicle.seatingCap
 						})
 						.then( newtrip => {
-							vehicle.tripID.push(newtrip._id)
+							vehicle.tripID.push(newtrip._id);
 							vehicle.save();
 								return res.json({
 									"message" : "Trip created successfully",

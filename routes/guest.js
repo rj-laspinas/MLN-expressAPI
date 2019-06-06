@@ -132,6 +132,7 @@ const moment = require("moment");
 // TRIP CONTROLLER 
 	//index
 	router.post("/trips/search", (req, res, next) => {
+
 		let origin = req.body.origin;
 		let destination = req.body.destination;
 		let startDate = req.body.startDate;
@@ -139,26 +140,31 @@ const moment = require("moment");
 		let start = moment(req.body.startDate).startOf('day');
 		let end = moment(req.body.startDate).endOf('day');
 
+		// return res.json(start);
 
 		Trip.find({
 			"origin": origin, 
 			"destination": destination, 
-			"startDate": { '$gte': start, '$lte': end }, 
 			"isCompleted": false, 
 			"isCancelled": false
 		})
-		.then( trips => {
-			trips.forEach(trip => {
-
+		.then( itrips => {
+			let trips = [];
+			itrips.forEach(itrip => {
+					// trips.push({itrip});
+				if(moment(itrip.startDate).isSameOrAfter(start) && moment(itrip.startDate).isSameOrBefore(end)){
+					trips.push(itrip);
+				}
 			})
 				return res.json({
 					trips: trips,	
 					quantity: quantity,
-					startDate: req.body.startDate
-				})
+					startDate: req.body.startDate 
+				})	
 		})
 		.catch(next)
 	})
+
 	//SHOW
 	router.get("/trips/:id", (req, res, next) => {
 		Trip.findById(req.params.id)

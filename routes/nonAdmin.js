@@ -145,8 +145,10 @@ const moment = require("moment");
 // BOOKING CONTROLLER 
 
 	//index
+
+	// return res.json(req.user._id)
 	router.get("/bookings", (req, res, next) => {
-		Booking.find({userId: req.user.id})
+		Booking.find({userId: req.user._id})
 		.then(bookings => {
 			Trip.find({})
 			.then(trips =>{
@@ -265,7 +267,7 @@ const moment = require("moment");
 		}).catch(next)
 	})
 
-	router.delete("/booking/:id", (req, res, next) => {
+	router.delete("/bookings/:id", (req, res, next) => {
 
 		Booking.findById(req.params.id).then( booking => {
 			

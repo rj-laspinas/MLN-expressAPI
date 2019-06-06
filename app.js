@@ -56,6 +56,6 @@ function noVefify(req, res, next){
 		next()
 
 }
-
+// GUEST ROUTE - NO VERIFICATION
 const  guest = require("./routes/guest.js");
 app.use("/guest", guest);
