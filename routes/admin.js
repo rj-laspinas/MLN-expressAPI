@@ -267,18 +267,19 @@ const moment = require("moment");
 
 	//store
 	router.post("/locations", (req, res, next) => {
-		let address = req.body.address;
+		let streetAddress = req.body.streetAddress;
 		let city = req.body.city;
 		let province = req.body.province;
+		let name = req.body.name;
 
 
-		if(!address || !city || !province){
+		if(!name){
 			return res.status(500).json({
 				"message" : "Missing information, please complete all fields"
 			})
 		}
 
-		Location.find({"address" : address, "city": city}).then(function(location, err){
+		Location.find({"name" : name}).then(function(location, err){
 			if(err){
 				return res.status(500).json({
 					"error": "an error occured while querying the collection"
@@ -294,7 +295,7 @@ const moment = require("moment");
 			Location.create(req.body)
 			.then(location => {
 				return res.json({
-					"message" : "New location created successfully",
+					"message" : location +" has been successfully added to the location list",
 					"location": location
 				})
 			})
@@ -345,9 +346,13 @@ const moment = require("moment");
 		.then(vehicles => {
 			Category.find({})
 			.then( categories => {
-				return res.json({
-					vehicles: vehicles,
-					categories: categories
+				Location.find({})
+				.then( locations => {
+					return res.status(200).json({
+						vehicles: vehicles,
+						categories: categories,
+						locations: locations
+					})	
 				})
 			})
 			
@@ -616,7 +621,7 @@ const moment = require("moment");
 			})
 		}
 		trips.forEach((trip) => {
-			if(moment().isSameOrAfter(trip.startDate, 'hour')){
+			if(moment().isSameOrAfter(trip.startDate, 'day')){
 				Vehicle.findById(trip.vehicleId)
 				.then((vehicle, err) => {
 					if(err){
@@ -655,11 +660,16 @@ const moment = require("moment");
 			.then(vehicles => {
 				Category.find({})
 				.then(categories =>{
-					return res.status(200).json({
-						trips: trips,
-						vehicles: vehicles,
-						categories: categories
+					Location.find
+					.then( location => {
+						return res.status(200).json({
+							trips: trips,
+							vehicles: vehicles,
+							categories: categories,
+							location: location
+						})	
 					})
+					
 				})
 			})
 			
@@ -706,6 +716,11 @@ const moment = require("moment");
 			})
 		}
 
+		if(moment().isBefore(moment(startDate))){
+			return res.json({
+				message : "Invalid date. Please select another date."
+			})
+		}
 
 		Vehicle.findById(vehicleId)
 		.then(function(vehicle, err){
@@ -786,13 +801,9 @@ const moment = require("moment");
 							message : "Trip creation could not push through, Vehicle has scheduled trip on dates selected."
 						})
 					}
-
 				}		
-
-			}).catch(next)
-			
-		}).catch(next)
-		
+			}).catch(next)			
+		}).catch(next)		
 	})
 
 	//UPDATE
@@ -813,6 +824,11 @@ const moment = require("moment");
 			})
 		}
 		
+		if(moment().isBefore(moment(startDate))){
+			return res.json({
+				message : "Invalid date. Please select another date."
+			})
+		}
 		//remove trip ids from
 					
 		Trip.findById(req.params.id).then((trip) =>{

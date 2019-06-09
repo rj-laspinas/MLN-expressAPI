@@ -7,6 +7,7 @@ const Location = require('../models/Location');
 const Vehicle = require('../models/Vehicle');
 const Trip = require('../models/Trip');
 const Booking = require('../models/Booking');
+const Guest = require('../models/Guest');
 
 const stripe = require("stripe")("sk_test_F5uf0IKkq8YvZilGPZ4RMMR300TTwqK27j");
 
@@ -85,15 +86,10 @@ const moment = require("moment");
 		.then(trip => {
 			Vehicle.findById(trip.vehicleId)
 			.then(vehicle =>{
-				Vehicle.find({})
-				.then(fleet => {
-					return res.json({
-						trip: trip,
-						vehicle: vehicle,
-						fleet: fleet
-					})
-				})
-				
+				return res.json({
+					trip: trip,
+					vehicle: vehicle,
+				})			
 			})
 		})
 		.catch(next)
@@ -107,14 +103,17 @@ const moment = require("moment");
 			.then(vehicles => {
 				Category.find({})
 				.then(categories =>{
-					return res.status(200).json({
-						trips: trips,
-						vehicles: vehicles,
-						categories: categories
-					})
+					Location.find({})
+					.then(locations =>{
+						return res.status(200).json({
+							trips: trips,
+							vehicles: vehicles,
+							categories: categories,
+							locations: locations
+						})
+					})					
 				})
-			})
-			
+			})			
 		})
 		.catch(next)
 	})
@@ -218,85 +217,107 @@ const moment = require("moment");
 	})
 
 	// STORE
-	router.post("/booking", (req, res, next) => {
+	router.post("/bookings", (req, res, next) => {
 		let tripId = req.body.tripId;
-		let userId =  req.user._id;
 		let quantity = req.body.quantity;
 
-		// return res.json(req.body);
-		if(!tripId || !userId || !quantity){
-			return res.status(500).json({
-				"message" : "Missing information, please complete all fields"
+
+		User.create({
+			"fname": req.body.fname,
+			"lname": req.body.lname,
+			"mobile": req.body.mobile,
+			"password": null,
+			"isGuest": true
+					
+				})
+		.then(user => {
+
+			Guest.create({
+				userId: user._id,
+				tripId: tripId,
+				email: req.body.email
 			})
-		}
+			.then(guest =>{
 
-		Trip.findById(tripId).then((trip, err) =>{
-			// return res.json(trip.price)
-			total = trip.price * quantity;
-			if(err){
-				return res.status(500).json({
-					"error": "an error occured while querying the collection"
-				})
-			}
-
-
-			if(trip.seats == 0) {
-				return res.json({
-					message : "Trips is already full, please select another trip",
-					seats : trip.seats
-				})
-			} 
-
-			if(trip.seats <= quantity){
-				return res.json({
-					message : "There are not enough seats on this trip, please review your booking",
-					seats : trip.seats 
-				})
-			}
-
-			//STRIPE CHARGE
-			stripe.customers.create({
-				email : req.user.email,
-				description: req.user.fname + " " + req.user.lname +" has booked a trip from " + trip.origin + "-" + trip.destination + " departing on " + trip.startDate +".",
-				source : "tok_amex"
-			})
-			.then(customer => {
-				stripe.charges.create({
-					amount : total * 100,
-					currency: "php",
-					source: customer.default_source,
-					description:" Payment on trip from " + trip.origin + "-" + trip.destination + "departing on " + trip.startDate +".",
-					customer: customer.id
-				})
-				.then(charges => {
-					Booking.create({
-						tripId : trip.id,
-						userId : userId,
-						quantity: quantity,
-						amount: total,
-						chargeId : charges.id,
-
-						bookingDate : moment(),
+				if(!tripId || !quantity){
+					return res.status(500).json({
+						"message" : "Missing information, please complete all fields"
 					})
-					.then(booking =>{
-						
-						trip.seats -= 1;
-						trip.bookedPassengers.push(booking._id);
-						trip.save();
-						return res.json({
-							message: "You have booked successfully, thank you for choosing MLN Expess",
-							booking : booking
+				}
+
+				Trip.findById(tripId).then((trip, err) =>{
+					// return res.json(trip.price)
+					total = trip.price * quantity;
+					if(err){
+						return res.status(500).json({
+							"error": "an error occured while querying the collection"
 						})
+					}
+
+
+					if(trip.seats == 0) {
+						return res.json({
+							message : "Trips is already full, please select another trip",
+							seats : trip.seats
+						})
+					} 
+
+					if(trip.seats <= quantity){
+						return res.json({
+							message : "There are not enough seats on this trip, please review your booking",
+							seats : trip.seats 
+						})
+					}
+
+					//STRIPE CHARGE
+					stripe.customers.create({
+						email : user.email,
+						description: user.fname + " " + user.lname +" has booked a trip from " + trip.origin + "-" + trip.destination + " departing on " + trip.startDate +".",
+						source : "tok_amex"
 					})
-				})
+					.then(customer => {
+						stripe.charges.create({
+							amount : total * 100,
+							currency: "php",
+							source: customer.default_source,
+							description:" Payment on trip from " + trip.origin + "-" + trip.destination + "departing on " + trip.startDate +".",
+							customer: customer.id
+						})
+						.then(charges => {
+							Booking.create({
+								tripId : trip.id,
+								userId : user._id,
+								quantity: quantity,
+								amount: total,
+								chargeId : charges.id,
 
-			})
-
-
+								bookingDate : moment(),
+							})
+							.then(booking =>{
+								
+								trip.seats -= 1;
+								trip.bookedPassengers.push(booking._id);
+								trip.save();
+								Vehicle.findById(trip.vehicleId)
+								.then( vehicle => {
+									return res.json({
+										message: "You have booked successfully, thank you for choosing MLN Expess",
+										booking : booking,
+										trip: trip,
+										vehicle, vehicle,
+										user: user,
+										guest: guest,
+									})
+								})
+							}).catch(next)
+						}).catch(next)
+					}).catch(next)
+				}).catch(next)
+			}).catch(next)
 		}).catch(next)
-
 	})
 
+		
 	router.delete("/booking/:id", (req, res, next) => {
 
 		Booking.findById(req.params.id).then( booking => {

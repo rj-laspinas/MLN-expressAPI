@@ -5,7 +5,8 @@ const Schema = mongoose.Schema;
 
 const LocationSchema = new Schema({
 	
-	address: String,
+	name: String,
+	streetAddress: String,
 	city: String,
 	province: String,
 
