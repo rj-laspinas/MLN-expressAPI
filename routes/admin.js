@@ -456,7 +456,7 @@ const moment = require("moment");
 				return res.json({
 					"message": "Entry was successfully Activated",
 					"vehicle": vehicle
-					})
+				})
 			}
 		})
 	})
@@ -626,7 +626,7 @@ const moment = require("moment");
 				.then((vehicle, err) => {
 					if(err){
 						return res.status(err.status).json({
-							error: "error looking for specified instructor"
+							error: "error in searching vehicle"
 						})
 					}
 					vehicle.onTrip = true;
@@ -641,7 +641,7 @@ const moment = require("moment");
 				.then((vehicle, err) => {
 					if(err){
 						return res.status(err.status).json({
-							error: "error looking for specified instructor"
+							error: "error in seraching vehicle"
 						})
 					}
 					vehicle.onTrip = false;
@@ -660,7 +660,7 @@ const moment = require("moment");
 			.then(vehicles => {
 				Category.find({})
 				.then(categories =>{
-					Location.find
+					Location.find({})
 					.then( location => {
 						return res.status(200).json({
 							trips: trips,
