@@ -226,18 +226,12 @@ const moment = require("moment");
 			"fname": req.body.fname,
 			"lname": req.body.lname,
 			"mobile": req.body.mobile,
+			"email": Math.random().toString(36).substr(2, 9)+"@email.com",
 			"password": null,
-			"isGuest": true
+			"isGuest": req.body.email
 					
 				})
 		.then(user => {
-
-			Guest.create({
-				userId: user._id,
-				tripId: tripId,
-				email: req.body.email
-			})
-			.then(guest =>{
 
 				if(!tripId || !quantity){
 					return res.status(500).json({
@@ -306,12 +300,10 @@ const moment = require("moment");
 										trip: trip,
 										vehicle, vehicle,
 										user: user,
-										guest: guest,
 									})
 								})
 							}).catch(next)
 						}).catch(next)
-					}).catch(next)
 				}).catch(next)
 			}).catch(next)
 		}).catch(next)
