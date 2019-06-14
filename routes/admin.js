@@ -136,16 +136,16 @@ const moment = require("moment");
 				user.isActive = false;
 				user.save();
 				return res.json({
-				"message": "User has been successfully disabled",
-				"user": user
-			})
+					"message": "User has been successfully disabled",
+					"user": user
+				})
 			} else  {
 				user.isActive = true;
 				user.save();
 				return res.json({
-				"message": "User has been successfully enabled",
-				"user": user
-			})
+					"message": "User has been successfully enabled",
+					"user": user
+				})
 			}
 		})
 	})
@@ -158,16 +158,16 @@ const moment = require("moment");
 				user.isAdmin = false;
 				user.save();
 				return res.json({
-				"message": "Admin rights for user have been widthrawn",
-				"user": user
-			})
+					"message": "Admin rights for user have been widthrawn",
+					"user": user
+				})
 			} else  {
 				user.isAdmin = true;
 				user.save();
 				return res.json({
-				"message": "User has been granted Administrator rights",
-				"user": user
-			})
+					"message": "User has been granted Administrator rights",
+					"user": user
+				})
 			}
 		})
 	})
@@ -716,9 +716,11 @@ const moment = require("moment");
 			})
 		}
 
-		if(moment().isBefore(moment(startDate))){
+		if(moment(startDate).isBefore(moment())){
 			return res.json({
-				message : "Invalid date. Please select another date."
+				message : "Invalid date. Please select another date.",
+				moment: moment(),
+				startDate: moment(startDate),
 			})
 		}
 

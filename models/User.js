@@ -13,7 +13,7 @@ const UserSchema = new Schema({
 	
 	isAdmin: {type: Boolean, default: false},
 	isActive: {type: Boolean, default: true},
-	isGuest: {type: String,	default: false},
+	isGuest: {type: String,	default: "false"},
 	
 
 	// isProvider: {type: Boolean,	default: false},
