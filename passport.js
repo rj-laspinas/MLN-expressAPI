@@ -37,20 +37,20 @@ passport.use(new LocalStrategy({usernameField: "email"}, (email, password, done)
 		}
 		//if a matching email is found in the collection
 		if(email == user.email){
-			if(user.isActive == false){
-				return done(null, false, {"message" : "account has been deactivated"})
+			// if(user.isActive == false){
+			// 	return done(null, false, {"message" : "account has been deactivated"})
+			// }
+			//check if the password hash matches the stored password
+			//takes in two arguments for comparison:
+				//first is the user-submitted password
+				//second is the password field of the resulting user document from our previous query
+			if(!bcrypt.compareSync(password, user.password)){
+				//return an invalid credentials error status
+				return done(null, false, {"message": "wrong password"});
+			} else {
+				//return a successful login if both email and password matches
+				return done(null, user);
 			}
-				//check if the password hash matches the stored password
-				//takes in two arguments for comparison:
-					//first is the user-submitted password
-					//second is the password field of the resulting user document from our previous query
-				if(!bcrypt.compareSync(password, user.password)){
-					//return an invalid credentials error status
-					return done(null, false, {"message": "wrong password"});
-				} else {
-					//return a successful login if both email and password matches
-					return done(null, user);
-				}
 		}
 		//for all other cases
 		return done(null, false, {"message": "something went terribly wrong, better get some REST"});

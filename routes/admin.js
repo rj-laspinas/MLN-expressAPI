@@ -826,7 +826,7 @@ const moment = require("moment");
 			})
 		}
 		
-		if(moment().isBefore(moment(startDate))){
+		if(moment(startDate).isBefore(moment())){
 			return res.json({
 				message : "Invalid date. Please select another date."
 			})
