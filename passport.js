@@ -37,9 +37,6 @@ passport.use(new LocalStrategy({usernameField: "email"}, (email, password, done)
 		}
 		//if a matching email is found in the collection
 		if(email == user.email){
-			// if(user.isActive == false){
-			// 	return done(null, false, {"message" : "account has been deactivated"})
-			// }
 			//check if the password hash matches the stored password
 			//takes in two arguments for comparison:
 				//first is the user-submitted password
